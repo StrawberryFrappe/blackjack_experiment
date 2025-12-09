@@ -6,17 +6,16 @@ import numpy as np
 from typing import List, Optional, Dict, Tuple, Union
 
 from ..base import HybridPolicyNetworkBase, encode_blackjack_state
-from .config import HybridDefaults, BypassMode
+from .config import HybridDefaults
 from .encoder import build_encoder, compute_encoder_dim
 from .compression import compress_to_quantum_input
 from .quantum import build_quantum_circuit
-from .controls import FreezeControls, BypassControls, QuantumDropout
+from .controls import FreezeControls, QuantumDropout
 
 
 class UniversalBlackjackHybridPolicyNetwork(
     HybridPolicyNetworkBase,
     FreezeControls,
-    BypassControls,
     QuantumDropout
 ):
     """Hybrid quantum-classical policy network for Blackjack-v1.
@@ -84,7 +83,6 @@ class UniversalBlackjackHybridPolicyNetwork(
         self.encoding_scale = getattr(HybridDefaults, 'ENCODING_SCALE', 2.0)
         
         # Control state
-        self._bypass_mode = BypassMode.NONE
         self._frozen_components = set()
         self._quantum_dropout_rate = 0.0
         
@@ -178,10 +176,8 @@ class UniversalBlackjackHybridPolicyNetwork(
         # Stats (optional)
         stats = self._encoding_stats(encoded) if return_encoding_stats else {}
         
-        # Quantum (with bypass support)
-        quantum_out = self.get_quantum_output_with_bypass(
-            encoded, batch_size, self.quantum_output_dim
-        )
+        # Quantum
+        quantum_out = self._run_quantum(encoded)
         
         # Postprocessing
         logits = self.postprocessing(quantum_out)
@@ -200,9 +196,7 @@ class UniversalBlackjackHybridPolicyNetwork(
         )
         scaled_out = (self.input_scale * compressed_out + self.input_bias 
                       if self.learnable_input_scaling else compressed_out)
-        quantum_out = self.get_quantum_output_with_bypass(
-            scaled_out, batch_size, self.quantum_output_dim
-        )
+        quantum_out = self._run_quantum(scaled_out)
         logits = self.postprocessing(quantum_out)
         probs = self.softmax(logits)
         
@@ -212,7 +206,6 @@ class UniversalBlackjackHybridPolicyNetwork(
             'compressed_encoder_output': compressed_out,
             'scaled_encoder_output': scaled_out,
             'quantum_output': quantum_out,
-            'bypass_mode': self._bypass_mode.value,
             'action_probs': probs
         }
     

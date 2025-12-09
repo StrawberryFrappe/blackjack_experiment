@@ -5,8 +5,6 @@ import torch.nn as nn
 import random
 from typing import Union
 
-from .config import BypassMode
-
 
 class FreezeControls:
     """Mixin for freezing/unfreezing network components."""
@@ -72,86 +70,6 @@ class FreezeControls:
     def get_frozen_components(self) -> set:
         """Get set of frozen component names."""
         return self._frozen_components.copy()
-
-
-class BypassControls:
-    """Mixin for bypass mode control."""
-    
-    def set_bypass_mode(self, mode: Union[str, BypassMode]):
-        """Set bypass mode for quantum circuit.
-        
-        Args:
-            mode: 'none', 'zeros', 'encoder', 'noise', or 'scrambler'
-                - none: Normal quantum processing
-                - zeros: Replace quantum output with zeros
-                - encoder: Pass scaled encoder output directly (truncated/padded)
-                - noise: Replace with random noise in [-1, 1]
-                - scrambler: Freeze encoder with random weights (data scrambler)
-        """
-        if isinstance(mode, str):
-            mode = BypassMode(mode.lower())
-        self._bypass_mode = mode
-        
-        # If switching to scrambler mode, initialize random encoder
-        if mode == BypassMode.SCRAMBLER:
-            self.initialize_scrambler_mode()
-    
-    def initialize_scrambler_mode(self):
-        """Initialize scrambler mode: randomize encoder weights and freeze them.
-        
-        This makes the encoder a 'scrambler' - it transforms game data randomly
-        but consistently. Useful for testing if the network can learn despite
-        noisy/scrambled input features.
-        """
-        # Reinitialize all encoder weights with random values
-        for module in self.feature_encoder.modules():
-            if isinstance(module, nn.Linear):
-                nn.init.uniform_(module.weight, -1.0, 1.0)
-                if module.bias is not None:
-                    nn.init.uniform_(module.bias, -0.5, 0.5)
-        
-        # Freeze the encoder so these random weights stay constant
-        self.freeze_component('encoder')
-    
-    def get_bypass_mode(self) -> BypassMode:
-        """Get current bypass mode."""
-        return self._bypass_mode
-    
-    def get_quantum_output_with_bypass(
-        self,
-        encoded: torch.Tensor,
-        batch_size: int,
-        quantum_output_dim: int
-    ) -> torch.Tensor:
-        """Get quantum output with bypass mode support."""
-        if self._bypass_mode == BypassMode.NONE:
-            return self._run_quantum(encoded)
-        
-        elif self._bypass_mode == BypassMode.ZEROS:
-            return torch.zeros(batch_size, quantum_output_dim, 
-                             device=encoded.device, dtype=encoded.dtype)
-        
-        elif self._bypass_mode == BypassMode.ENCODER:
-            # Truncate or pad encoder output to match quantum output dim
-            if encoded.shape[-1] >= quantum_output_dim:
-                return encoded[:, :quantum_output_dim]
-            else:
-                padding = torch.zeros(batch_size, 
-                                    quantum_output_dim - encoded.shape[-1],
-                                    device=encoded.device, dtype=encoded.dtype)
-                return torch.cat([encoded, padding], dim=-1)
-        
-        elif self._bypass_mode == BypassMode.NOISE:
-            return torch.rand(batch_size, quantum_output_dim,
-                            device=encoded.device, dtype=encoded.dtype) * 2 - 1
-        
-        elif self._bypass_mode == BypassMode.SCRAMBLER:
-            # Scrambler mode: encoder has frozen random weights, pass quantum normally
-            # The scrambling happens in the encoder itself (weights are frozen and random)
-            return self._run_quantum(encoded)
-        
-        else:
-            return self._run_quantum(encoded)
 
 
 class QuantumDropout:

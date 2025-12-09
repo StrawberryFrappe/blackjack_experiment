@@ -473,7 +473,6 @@ class A2CAgent:
                 'postprocessing_layers': postproc_hidden if postproc_hidden else None,
                 # Control modes (dropout, frozen encoder)
                 'quantum_dropout_rate': getattr(self.policy_net, '_quantum_dropout_rate', 0.0),
-                'bypass_mode': str(getattr(self.policy_net, '_bypass_mode', 'NONE')),
                 'frozen_components': list(getattr(self.policy_net, '_frozen_components', set())),
             }
         else:

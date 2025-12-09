@@ -3,15 +3,6 @@
 from enum import Enum
 
 
-class BypassMode(Enum):
-    """Bypass modes for quantum circuit during forward pass."""
-    NONE = 'none'           # Normal quantum processing
-    ZEROS = 'zeros'         # Replace quantum output with zeros
-    ENCODER = 'encoder'     # Pass encoder output directly (truncated/padded)
-    NOISE = 'noise'         # Replace with random noise in [-1, 1]
-    SCRAMBLER = 'scrambler' # Freeze encoder with random weights (data scrambler)
-
-
 class HybridDefaults:
     """Default configuration values. Modify here to change defaults globally.
     

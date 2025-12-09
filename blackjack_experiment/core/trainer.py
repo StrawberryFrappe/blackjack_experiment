@@ -601,7 +601,6 @@ class Trainer:
                 'encoding_scale': getattr(policy_net, 'encoding_scale', 2.0),
                 'learnable_input_scaling': getattr(policy_net, 'learnable_input_scaling', False),
                 'quantum_dropout_rate': getattr(policy_net, '_quantum_dropout_rate', 0.0),
-                'bypass_mode': str(getattr(policy_net, '_bypass_mode', 'NONE')),
                 'frozen_components': list(getattr(policy_net, '_frozen_components', set())),
                 'microwaved_encoder': getattr(self.config, 'microwaved_encoder', False),
                 'microwaved_fraction': getattr(self.config, 'microwaved_fraction', 0.5),
