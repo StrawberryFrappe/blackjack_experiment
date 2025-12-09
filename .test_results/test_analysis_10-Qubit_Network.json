@@ -1,0 +1,275 @@
+{
+  "sensitivity": {
+    "sensitivities": {
+      "player_sum": [
+        {
+          "value": 4,
+          "action": 0,
+          "confidence": 0.5058038830757141,
+          "hit_prob": 0.4941961467266083,
+          "sensitivity": 0.0018755197525024414
+        },
+        {
+          "value": 5,
+          "action": 0,
+          "confidence": 0.505618155002594,
+          "hit_prob": 0.49438178539276123,
+          "sensitivity": 0.0020611584186553955
+        },
+        {
+          "value": 6,
+          "action": 0,
+          "confidence": 0.5070821046829224,
+          "hit_prob": 0.49291783571243286,
+          "sensitivity": 0.0005972087383270264
+        },
+        {
+          "value": 7,
+          "action": 0,
+          "confidence": 0.5048595666885376,
+          "hit_prob": 0.4951404333114624,
+          "sensitivity": 0.0028198063373565674
+        },
+        {
+          "value": 8,
+          "action": 0,
+          "confidence": 0.5070561170578003,
+          "hit_prob": 0.4929438829421997,
+          "sensitivity": 0.0006232559680938721
+        },
+        {
+          "value": 9,
+          "action": 0,
+          "confidence": 0.5061608552932739,
+          "hit_prob": 0.49383920431137085,
+          "sensitivity": 0.0015185773372650146
+        },
+        {
+          "value": 10,
+          "action": 0,
+          "confidence": 0.5053451061248779,
+          "hit_prob": 0.49465498328208923,
+          "sensitivity": 0.0023343563079833984
+        },
+        {
+          "value": 11,
+          "action": 0,
+          "confidence": 0.5059494376182556,
+          "hit_prob": 0.4940505921840668,
+          "sensitivity": 0.0017299652099609375
+        },
+        {
+          "value": 12,
+          "action": 0,
+          "confidence": 0.5080556869506836,
+          "hit_prob": 0.49194425344467163,
+          "sensitivity": 0.0003763735294342041
+        },
+        {
+          "value": 13,
+          "action": 0,
+          "confidence": 0.5057294964790344,
+          "hit_prob": 0.4942704737186432,
+          "sensitivity": 0.0019498467445373535
+        },
+        {
+          "value": 14,
+          "action": 0,
+          "confidence": 0.5043796300888062,
+          "hit_prob": 0.49562039971351624,
+          "sensitivity": 0.0032997727394104004
+        },
+        {
+          "value": 15,
+          "action": 0,
+          "confidence": 0.5076794028282166,
+          "hit_prob": 0.49232062697410583,
+          "sensitivity": 0.0
+        },
+        {
+          "value": 16,
+          "action": 0,
+          "confidence": 0.507327139377594,
+          "hit_prob": 0.4926728308200836,
+          "sensitivity": 0.0003522038459777832
+        },
+        {
+          "value": 17,
+          "action": 0,
+          "confidence": 0.5052350163459778,
+          "hit_prob": 0.49476495385169983,
+          "sensitivity": 0.002444326877593994
+        },
+        {
+          "value": 18,
+          "action": 0,
+          "confidence": 0.5066312551498413,
+          "hit_prob": 0.4933687150478363,
+          "sensitivity": 0.0010480880737304688
+        },
+        {
+          "value": 19,
+          "action": 0,
+          "confidence": 0.5076310634613037,
+          "hit_prob": 0.4923689365386963,
+          "sensitivity": 4.83095645904541e-05
+        },
+        {
+          "value": 20,
+          "action": 0,
+          "confidence": 0.5061017274856567,
+          "hit_prob": 0.4938982129096985,
+          "sensitivity": 0.0015775859355926514
+        },
+        {
+          "value": 21,
+          "action": 0,
+          "confidence": 0.5033228397369385,
+          "hit_prob": 0.49667713046073914,
+          "sensitivity": 0.004356503486633301
+        }
+      ],
+      "dealer_card": [
+        {
+          "value": 1,
+          "action": 0,
+          "confidence": 0.5078311562538147,
+          "hit_prob": 0.4921689033508301,
+          "sensitivity": 0.00015172362327575684
+        },
+        {
+          "value": 2,
+          "action": 0,
+          "confidence": 0.5085778832435608,
+          "hit_prob": 0.4914221465587616,
+          "sensitivity": 0.0008984804153442383
+        },
+        {
+          "value": 3,
+          "action": 0,
+          "confidence": 0.5067089200019836,
+          "hit_prob": 0.4932910203933716,
+          "sensitivity": 0.0009703934192657471
+        },
+        {
+          "value": 4,
+          "action": 0,
+          "confidence": 0.5072416663169861,
+          "hit_prob": 0.4927583932876587,
+          "sensitivity": 0.00043776631355285645
+        },
+        {
+          "value": 5,
+          "action": 0,
+          "confidence": 0.5075125098228455,
+          "hit_prob": 0.49248751997947693,
+          "sensitivity": 0.00016689300537109375
+        },
+        {
+          "value": 6,
+          "action": 0,
+          "confidence": 0.5077275633811951,
+          "hit_prob": 0.49227240681648254,
+          "sensitivity": 4.8220157623291016e-05
+        },
+        {
+          "value": 7,
+          "action": 0,
+          "confidence": 0.5076794028282166,
+          "hit_prob": 0.49232062697410583,
+          "sensitivity": 0.0
+        },
+        {
+          "value": 8,
+          "action": 0,
+          "confidence": 0.5076391100883484,
+          "hit_prob": 0.492360919713974,
+          "sensitivity": 4.029273986816406e-05
+        },
+        {
+          "value": 9,
+          "action": 0,
+          "confidence": 0.5064016580581665,
+          "hit_prob": 0.4935983717441559,
+          "sensitivity": 0.0012777447700500488
+        },
+        {
+          "value": 10,
+          "action": 0,
+          "confidence": 0.5080556869506836,
+          "hit_prob": 0.4919443130493164,
+          "sensitivity": 0.0003763139247894287
+        }
+      ],
+      "usable_ace": [
+        {
+          "value": 0,
+          "action": 0,
+          "confidence": 0.5076794028282166,
+          "hit_prob": 0.49232062697410583,
+          "sensitivity": 0.0
+        },
+        {
+          "value": 1,
+          "action": 0,
+          "confidence": 0.5061959028244019,
+          "hit_prob": 0.49380406737327576,
+          "sensitivity": 0.0014834403991699219
+        }
+      ]
+    },
+    "average_sensitivities": {
+      "player_sum": 0.0016118254926469591,
+      "dealer_card": 0.0004367828369140625,
+      "usable_ace": 0.0007417201995849609
+    },
+    "baseline_state": [
+      15,
+      7,
+      0
+    ],
+    "baseline_action": 0,
+    "baseline_confidence": 0.5076794028282166
+  },
+  "contributions": {
+    "statistics": {
+      "feature_encoder": {
+        "mean": 0.6943261897563935,
+        "std": 0.08998869144623452,
+        "min": 0.5396078824996948,
+        "max": 1.0915770530700684
+      },
+      "quantum_circuit": {
+        "mean": 0.5828938519954682,
+        "std": 0.10184515250103221,
+        "min": 0.3148730397224426,
+        "max": 0.833069384098053
+      },
+      "postprocessing": {
+        "mean": 0.025964230448007584,
+        "std": 0.0036584192933353256,
+        "min": 0.015771586447954178,
+        "max": 0.03208145499229431
+      }
+    },
+    "relative_contributions": {
+      "feature_encoder": 53.279202685919515,
+      "quantum_circuit": 44.72842900501716,
+      "postprocessing": 1.9923683090633133
+    }
+  },
+  "decision_map_stats": {
+    "player_range": [
+      4,
+      21
+    ],
+    "dealer_range": [
+      1,
+      10
+    ],
+    "hit_rate_no_ace": 0.4925891732176145,
+    "hit_rate_usable_ace": 0.49416545745399265,
+    "avg_confidence_no_ace": 0.5074108335706923,
+    "avg_confidence_usable_ace": 0.5058345440361235
+  }
+}

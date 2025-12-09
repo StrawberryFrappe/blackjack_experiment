@@ -1,0 +1,9 @@
+# CPU-OPTIMIZED: Requirements for quantum circuit training
+torch>=2.0.0
+pennylane>=0.30.0
+gymnasium>=0.28.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+scikit-learn>=1.0.0
+pygame>=2.5.0
