@@ -57,7 +57,7 @@ Examples:
     from ..networks.classical import BlackjackClassicalValueNetwork
     from ..core.agent import A2CAgent
     from ..core.session import SessionManager
-    from ..analysis.experiments.bypass import QuantumFirstTrainer
+    from ..analysis.experiments.qfirst import QuantumFirstTrainer
     from ..analysis.gradient_flow import GradientFlowAnalyzer as HybridGradientAnalyzer
     
     # Set seed
