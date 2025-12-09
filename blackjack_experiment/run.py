@@ -7,7 +7,7 @@ Commands:
     python run.py classical          # Train classical only
     python run.py hybrid             # Train hybrid only
     python run.py eval <checkpoint>  # Evaluate a model
-    python run.py bypass             # Bypass experiment (quantum contribution test)
+    python run.py bypass             # [DEPRECATED] Module removed, use qfirst instead
     python run.py qfirst             # Quantum-first training
     python run.py everything         # Run all experiments
 """
@@ -297,27 +297,10 @@ def evaluate(checkpoint: str, episodes: int = 500):
 
 
 def bypass(episodes: int = 1000, output: str = None, seed: int = None):
-    """Run bypass experiment."""
-    import torch
-    import numpy as np
-    import random
-    from blackjack_experiment.analysis.experiments.bypass import BypassExperimentRunner, BypassExperimentConfig
-    
-    seed = seed or random.randint(0, 2**31 - 1)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    
-    output = output or f"results/bypass_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    
-    config = BypassExperimentConfig(
-        phase_a_episodes=episodes,
-        phase_b_episodes=episodes,
-        bypass_modes=['zeros', 'encoder', 'noise']
-    )
-    
-    runner = BypassExperimentRunner(output_dir=output, config=config)
-    return runner.run_full_experiment()
+    """Run bypass experiment. [DEPRECATED - Module removed]"""
+    print("[ERROR] The bypass experiment module has been removed.")
+    print("Please use 'qfirst' for quantum-first training experiments.")
+    return None
 
 
 def qfirst(episodes: int = 5000, qf_episodes: int = 1000, dropout: float = 0.0, 
@@ -333,7 +316,7 @@ def qfirst(episodes: int = 5000, qf_episodes: int = 1000, dropout: float = 0.0,
     from blackjack_experiment.networks.classical import BlackjackClassicalValueNetwork
     from blackjack_experiment.core.agent import A2CAgent
     from blackjack_experiment.core.session import SessionManager
-    from blackjack_experiment.analysis.experiments.bypass import QuantumFirstTrainer
+    from blackjack_experiment.analysis.experiments.qfirst import QuantumFirstTrainer
     from blackjack_experiment.analysis.gradient_flow import GradientFlowAnalyzer as HybridGradientAnalyzer
     
     seed = seed or random.randint(0, 2**31 - 1)

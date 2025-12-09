@@ -19,8 +19,6 @@ Provides core analysis capabilities:
 
 7. **capacity.py** (CapacityAnalyzer) - Network capacity analysis and bottleneck detection
 
-8. **experiments/bypass.py** (BypassExperimentRunner) - Definitive quantum vs classical testing
-
 Shared utilities in utils.py: generate_all_blackjack_states, get_basic_strategy_action
 """
 
@@ -54,12 +52,8 @@ from .comparison import ComparisonAnalyzer, compare_models_from_checkpoints
 # Network capacity analysis
 from .capacity import CapacityAnalyzer, analyze_network_capacity
 
-# Bypass experiments
-from .experiments.bypass import (
-    BypassExperimentRunner,
-    BypassExperimentConfig,
-    QuantumFirstTrainer,
-)
+# Quantum-first experiments
+from .experiments.qfirst import QuantumFirstTrainer
 
 # Utilities
 from .utils import generate_all_blackjack_states, create_blackjack_test_states
@@ -88,9 +82,7 @@ __all__ = [
     'analyze_hybrid_intermediates',
     'compare_models_from_checkpoints',
     
-    # Bypass experiments
-    'BypassExperimentRunner',
-    'BypassExperimentConfig',
+    # Quantum-first experiments
     'QuantumFirstTrainer',
     
     # Utilities
