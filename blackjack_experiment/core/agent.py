@@ -462,7 +462,6 @@ class A2CAgent:
                 'data_reuploading': getattr(self.policy_net, 'data_reuploading', None),
                 'device_name': getattr(self.policy_net, 'device_name', 'default.qubit'),
                 # Encoding strategy (CRITICAL for reproducibility)
-                'encoding_strategy': getattr(self.policy_net, 'encoding_strategy', 'nonlinear'),
                 'single_axis_encoding': getattr(self.policy_net, 'single_axis_encoding', True),
                 'encoder_compression': getattr(self.policy_net, 'encoder_compression', 'minimal'),
                 'encoding_transform': getattr(self.policy_net, 'encoding_transform', 'arctan'),

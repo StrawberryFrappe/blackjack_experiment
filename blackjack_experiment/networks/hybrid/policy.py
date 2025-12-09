@@ -78,7 +78,6 @@ class UniversalBlackjackHybridPolicyNetwork(
         self.n_actions = 2
         
         # Quantum encoding strategy
-        self.encoding_strategy = getattr(HybridDefaults, 'ENCODING_STRATEGY', 'nonlinear')
         self.single_axis_encoding = getattr(HybridDefaults, 'SINGLE_AXIS_ENCODING', True)
         self.encoding_transform = getattr(HybridDefaults, 'ENCODING_TRANSFORM', 'arctan')
         self.reuploading_transform = getattr(HybridDefaults, 'REUPLOADING_TRANSFORM', 'arctan')

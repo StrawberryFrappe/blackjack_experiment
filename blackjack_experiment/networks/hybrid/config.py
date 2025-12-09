@@ -38,14 +38,12 @@ class HybridDefaults:
     ENCODER_LAYERS_COMPACT = None      # Hidden layers for compact encoding (direct mapping)
     
     # Quantum encoding strategy
-    ENCODING_STRATEGY = 'nonlinear'  # 'linear', 'nonlinear', 'arctan'
     SINGLE_AXIS_ENCODING = False  # Dual-axis encoding: encode data in both RY and RZ
     
-    # Encoding transforms (the "Chaos Fix")
+    # Encoding transforms
     # Controls how RL inputs (unbounded) are mapped to rotation angles (bounded)
     ENCODING_TRANSFORM = 'arctan'  # 'arctan', 'sin', 'cos', 'tanh', 'identity'
-    REUPLOADING_TRANSFORM = 'arctan'  # Transform for data re-uploading layers (use same as ENCODING_TRANSFORM for stability)
-    ENCODING_SCALE = 2  # Multiplier: arctan(x) * ENCODING_SCALE. Scale=2 maps to full [-π, π] range
+    REUPLOADING_TRANSFORM = 'arctan'  # Transform for data re-uploading layers
+    ENCODING_SCALE = 2  # arctan(x) * ENCODING_SCALE.
     
-    # PennyLane
     DEVICE = 'default.qubit'

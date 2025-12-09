@@ -594,7 +594,6 @@ class Trainer:
                 'measurement_mode': getattr(policy_net, 'measurement_mode', None),
                 'data_reuploading': getattr(policy_net, 'data_reuploading', None),
                 'device_name': getattr(policy_net, 'device_name', 'default.qubit'),
-                'encoding_strategy': getattr(policy_net, 'encoding_strategy', 'nonlinear'),
                 'single_axis_encoding': getattr(policy_net, 'single_axis_encoding', True),
                 'encoder_compression': getattr(policy_net, 'encoder_compression', 'minimal'),
                 'encoding_transform': getattr(policy_net, 'encoding_transform', 'arctan'),
