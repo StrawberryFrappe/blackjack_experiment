@@ -662,8 +662,10 @@ Examples:
                        help='Checkpoint path (for eval)')
     parser.add_argument('-e', '--episodes', type=int, default=5000,
                        help='Training episodes (default: 5000)')
-    parser.add_argument('-c', '--checkpoint-count', type=int, default=240,
-                       help='Number of evenly-spaced checkpoints (default: 240 for 10s @ 24fps timelapse). Set to 0 to disable checkpoints.')
+    parser.add_argument('-c', '--checkpoint-count', type=int, default=None,
+                       help='Number of evenly-spaced checkpoints. Default depends on --generate-gif.')
+    parser.add_argument('--generate-gif', action='store_true',
+                       help='Enable high-frequency checkpoints for smooth GIF generation.')
     parser.add_argument('-q', '--qf-episodes', type=int, default=1000,
                        help='Quantum-first episodes (for qfirst)')
     parser.add_argument('-d', '--dropout', type=float, default=0.0,
@@ -680,6 +682,13 @@ Examples:
                        help='Random seed')
     
     args = parser.parse_args()
+    
+    # Determine checkpoint count if not specified
+    if args.checkpoint_count is None:
+        if args.generate_gif:
+            args.checkpoint_count = 240
+        else:
+            args.checkpoint_count = 10
     
     # Handle microwaved encoder logic
     microwaved_encoder = False
