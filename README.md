@@ -37,11 +37,12 @@ graph TD
 
 ## Project Structure
 
+*   `blackjack_experiment/config.py`: The single source of truth for all hyperparameters (Quantum, RL, and Training).
 *   `blackjack_experiment/core`: Implementation of the A2C agent and trainer.
 *   `blackjack_experiment/networks`: Hybrid and Classical network architectures.
 *   `blackjack_experiment/analysis`: Tools for strategy heatmaps and quantum contribution metrics.
-*   `main.py`: Unified CLI for training, simulation, and evaluation.
-*   `jimbo_the_gambling_bot.py`: A self-contained demonstration of the hybrid agent.
+*   `main.py`: Unified CLI for training, comparison, and evaluation.
+*   `jimbo_the_gambling_bot.py`: A self-contained demonstration bot. Can be run with a trained model to see its decision process.
 
 ## Getting Started
 
@@ -72,6 +73,12 @@ python main.py compare -e 5000
 **Run Interactive Simulator:**
 ```bash
 python main.py simulate path/to/checkpoint.pth
+```
+
+**Meet Jimbo (The Bot):**
+```bash
+# Run with a trained brain
+python jimbo_the_gambling_bot.py --model path/to/model.pth
 ```
 
 ### Docker Deployment

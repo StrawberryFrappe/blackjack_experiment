@@ -246,25 +246,25 @@ class UniversalBlackjackHybridPolicyNetwork(
     def get_config_summary(self) -> str:
         """Human-readable configuration summary."""
         p = self.get_parameter_breakdown()
-        post_arch = ' → '.join([str(self.quantum_output_dim)] + 
+        post_arch = ' -> '.join([str(self.quantum_output_dim)] + 
                                [str(m.out_features) for m in self.postprocessing 
                                 if isinstance(m, nn.Linear)])
         
         return f"""
-╔══════════════════════════════════════════════════════════════════╗
-║  HYBRID NETWORK CONFIGURATION                                     ║
-╠══════════════════════════════════════════════════════════════════╣
-║  Quantum Circuit                                                  ║
-║    Qubits: {self.n_qubits}    Layers: {self.n_layers}    Entanglement: {self.entanglement_strategy:<8}        ║
-║    Measurement: {self.measurement_mode:<10}  Data Re-uploading: {str(self.data_reuploading):<5}       ║
-╠══════════════════════════════════════════════════════════════════╣
-║  Classical Components                                             ║
-║    Encoding: {self.encoding:<8}  Input Scaling: {str(self.learnable_input_scaling):<5}               ║
-║    Encoder Compression: {self.encoder_compression:<8}  Single-axis: {str(self.single_axis_encoding):<5}        ║
-║    Input: {self.input_dim} → Encoder: {self.encoder_output_dim} → Compressed: {self.quantum_input_dim} → Quantum: {self.quantum_output_dim}  ║
-║    Postprocessing: {post_arch:<40}  ║
-╠══════════════════════════════════════════════════════════════════╣
-║  Parameters                                                       ║
-║    Encoder: {p['feature_encoder']:<4}  Scaling: {p['input_scaling']:<4}  Quantum: {p['quantum_circuit']:<4}  Post: {p['postprocessing']:<4}   ║
-║    TOTAL: {p['total']:<4}                                                     ║
-╚══════════════════════════════════════════════════════════════════╝"""
++------------------------------------------------------------------+
+|  HYBRID NETWORK CONFIGURATION                                     |
++------------------------------------------------------------------+
+|  Quantum Circuit                                                  |
+|    Qubits: {self.n_qubits}    Layers: {self.n_layers}    Entanglement: {self.entanglement_strategy:<8}        |
+|    Measurement: {self.measurement_mode:<10}  Data Re-uploading: {str(self.data_reuploading):<5}       |
++------------------------------------------------------------------+
+|  Classical Components                                             |
+|    Encoding: {self.encoding:<8}  Input Scaling: {str(self.learnable_input_scaling):<5}               |
+|    Encoder Compression: {self.encoder_compression:<8}  Single-axis: {str(self.single_axis_encoding):<5}        |
+|    Input: {self.input_dim} -> Encoder: {self.encoder_output_dim} -> Compressed: {self.quantum_input_dim} -> Quantum: {self.quantum_output_dim}  |
+|    Postprocessing: {post_arch:<40}  |
++------------------------------------------------------------------+
+|  Parameters                                                       |
+|    Encoder: {p['feature_encoder']:<4}  Scaling: {p['input_scaling']:<4}  Quantum: {p['quantum_circuit']:<4}  Post: {p['postprocessing']:<4}   |
+|    TOTAL: {p['total']:<4}                                                     |
++------------------------------------------------------------------+"""
