@@ -12,11 +12,8 @@ Components:
 
 from .policy import UniversalBlackjackHybridPolicyNetwork
 from .value import UniversalBlackjackHybridValueNetwork
-from .config import HybridDefaults
 
 __all__ = [
     'UniversalBlackjackHybridPolicyNetwork',
     'UniversalBlackjackHybridValueNetwork',
-    'HybridDefaults',
-    'BypassMode'
 ]

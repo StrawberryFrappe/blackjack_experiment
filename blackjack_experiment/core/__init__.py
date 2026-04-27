@@ -8,7 +8,7 @@ This module provides:
 - Session management for outputs (session.py)
 """
 
-from .config import Config, NetworkConfig, AgentConfig, TrainingConfig
+from ..config import Config, HybridConfig as NetworkConfig, AgentConfig, TrainingConfig
 from .agent import A2CAgent
 from .trainer import Trainer, evaluate
 from .session import SessionManager, ComparisonSessionManager

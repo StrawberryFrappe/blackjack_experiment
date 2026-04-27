@@ -33,16 +33,16 @@ class SessionManager:
         network_type: Optional[str] = None,
         auto_timestamp: bool = False,
         agent_type: str = "a2c"
-    ):
+    ) -> None:
         """
-        Initialize session manager.
-        
+        Initialize the SessionManager to organize training outputs.
+
         Args:
-            base_dir: Base directory for all results
-            session_name: Custom session name (auto-generated if None)
-            network_type: Network type (e.g., 'classical', 'hybrid')
-            auto_timestamp: Add timestamp to session name
-            agent_type: Agent type (default: 'a2c')
+            base_dir (str): Base directory for all results. Defaults to "results".
+            session_name (Optional[str]): Custom session name. Auto-generated if None.
+            network_type (Optional[str]): The type of network being trained (e.g., 'classical', 'hybrid').
+            auto_timestamp (bool): If True, appends a timestamp to the session name for uniqueness. Defaults to False.
+            agent_type (str): The type of RL agent being used. Defaults to "a2c".
         """
         self.base_dir = Path(base_dir)
         self.network_type = network_type
@@ -181,7 +181,7 @@ class SessionManager:
         import numpy as np
         import sys
         
-        from .config import Config
+        from ..config import Config
         
         # Convert config to dict
         if isinstance(config, Config):

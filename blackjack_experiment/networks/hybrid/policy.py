@@ -6,7 +6,7 @@ import numpy as np
 from typing import List, Optional, Dict, Tuple, Union
 
 from ..base import HybridPolicyNetworkBase, encode_blackjack_state
-from .config import HybridDefaults
+from ...config import HybridConfig as HybridArchitectureConfig
 from .encoder import build_encoder, compute_encoder_dim
 from .compression import compress_to_quantum_input
 from .quantum import build_quantum_circuit
@@ -35,89 +35,74 @@ class UniversalBlackjackHybridPolicyNetwork(
     
     def __init__(
         self,
-        n_qubits: int = HybridDefaults.N_QUBITS,
-        n_layers: int = HybridDefaults.N_LAYERS,
-        encoding: str = HybridDefaults.ENCODING,
-        entanglement_strategy: str = HybridDefaults.ENTANGLEMENT,
-        measurement_mode: str = HybridDefaults.MEASUREMENT,
-        postprocessing_layers: Optional[List[int]] = None,
-        encoder_layers: Optional[List[int]] = None,
-        device_name: str = HybridDefaults.DEVICE,
-        data_reuploading: bool = HybridDefaults.DATA_REUPLOADING,
-        learnable_input_scaling: bool = HybridDefaults.LEARNABLE_INPUT_SCALING,
-        encoder_compression: str = HybridDefaults.ENCODER_COMPRESSION
+        config: Optional[HybridArchitectureConfig] = None,
+        **kwargs
     ):
         """Initialize the hybrid network.
         
         Args:
-            n_qubits: Number of qubits (default: 4)
-            n_layers: Variational layers (default: 3)
-            encoding: 'compact' (3 features) or 'one-hot' (45 features)
-            entanglement_strategy: 'linear', 'cyclic', 'full', or 'none'
-            measurement_mode: 'pauli_z' (n outputs) or 'amplitude' (2^n outputs)
-            postprocessing_layers: Hidden sizes for postprocessing (None = minimal)
-            encoder_layers: Hidden sizes for encoder (None = single layer)
-            device_name: PennyLane device
-            data_reuploading: Re-encode inputs at each layer (breaks linearity)
-            learnable_input_scaling: Add α*x + β before quantum encoding
-            encoder_compression: How to map encoder to quantum inputs
+            config: Optional HybridArchitectureConfig object.
+            **kwargs: Overrides for configuration parameters.
         """
         super().__init__()
         
+        # Merge config and kwargs
+        cfg = config or HybridArchitectureConfig()
+        for k, v in kwargs.items():
+            if hasattr(cfg, k):
+                setattr(cfg, k, v)
+        
         # Store configuration
-        self.n_qubits = n_qubits
-        self.n_layers = n_layers
-        self.encoding = encoding
-        self.entanglement_strategy = entanglement_strategy
-        self.measurement_mode = measurement_mode
-        self.device_name = device_name
-        self.data_reuploading = data_reuploading
-        self.learnable_input_scaling = learnable_input_scaling
-        self.encoder_compression = encoder_compression
+        self.n_qubits = cfg.n_qubits
+        self.n_layers = cfg.n_layers
+        self.encoding = cfg.encoding
+        self.entanglement_strategy = cfg.entanglement
+        self.measurement_mode = cfg.measurement
+        self.device_name = cfg.device
+        self.data_reuploading = cfg.data_reuploading
+        self.learnable_input_scaling = cfg.learnable_input_scaling
+        self.encoder_compression = cfg.encoder_compression
         self.n_actions = 2
         
         # Quantum encoding strategy
-        self.single_axis_encoding = getattr(HybridDefaults, 'SINGLE_AXIS_ENCODING', True)
-        self.encoding_transform = getattr(HybridDefaults, 'ENCODING_TRANSFORM', 'arctan')
-        self.reuploading_transform = getattr(HybridDefaults, 'REUPLOADING_TRANSFORM', 'arctan')
-        self.encoding_scale = getattr(HybridDefaults, 'ENCODING_SCALE', 2.0)
+        self.single_axis_encoding = cfg.single_axis_encoding
+        self.encoding_transform = cfg.encoding_transform
+        self.reuploading_transform = cfg.reuploading_transform
+        self.encoding_scale = cfg.encoding_scale
         
         # Control state
         self._frozen_components = set()
         self._quantum_dropout_rate = 0.0
         
         # Compute dimensions
-        self.input_dim = 3 if encoding == 'compact' else 45
+        self.input_dim = 3 if self.encoding == 'compact' else 45
         self.encoder_output_dim = compute_encoder_dim(
-            n_qubits, self.input_dim, encoder_compression, self.single_axis_encoding
+            self.n_qubits, self.input_dim, self.encoder_compression, self.single_axis_encoding
         )
-        self.quantum_input_dim = n_qubits * 2
-        self.quantum_output_dim = n_qubits if measurement_mode == 'pauli_z' else 2**n_qubits
-        
-        # Auto-select encoder layers based on encoding if not specified
-        if encoder_layers is None:
-            encoder_layers = (
-                HybridDefaults.ENCODER_LAYERS_ONE_HOT if encoding == 'one-hot'
-                else HybridDefaults.ENCODER_LAYERS_COMPACT
-            )
+        self.quantum_input_dim = self.n_qubits * 2
+        self.quantum_output_dim = self.n_qubits if self.measurement_mode == 'pauli_z' else 2**self.n_qubits
         
         # Build components
+        encoder_layers = cfg.encoder_layers
+        if encoder_layers is None and self.encoding == 'one-hot':
+            encoder_layers = [32, 16]
+        
         self.feature_encoder = build_encoder(self.input_dim, self.encoder_output_dim, encoder_layers)
-        self.encoder_layers = encoder_layers  # Store for config summary
+        self.encoder_layers = encoder_layers
         self.input_scale, self.input_bias = self._build_scaling()
         
-        # Initialize quantum weights: uniform in [-π/2, π/2]
         self.weights = nn.Parameter(
-            (torch.rand(n_layers, n_qubits, 2) - 0.5) * np.pi
+            (torch.rand(self.n_layers, self.n_qubits, 2) - 0.5) * np.pi
         )
         
         self.quantum_circuit = build_quantum_circuit(
-            n_qubits, n_layers, device_name, entanglement_strategy,
-            measurement_mode, data_reuploading, self.single_axis_encoding,
+            self.n_qubits, self.n_layers, self.device_name, self.entanglement_strategy,
+            self.measurement_mode, self.data_reuploading, self.single_axis_encoding,
             self.encoding_transform, self.reuploading_transform, self.encoding_scale
         )
-        self.postprocessing = self._build_postprocessing(postprocessing_layers)
+        self.postprocessing = self._build_postprocessing(cfg.postprocessing_layers)
         self.softmax = nn.Softmax(dim=-1)
+        
     
     def _build_scaling(self) -> Tuple[Optional[nn.Parameter], Optional[nn.Parameter]]:
         """Build learnable input scaling: α*x + β."""

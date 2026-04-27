@@ -7,7 +7,6 @@ Commands:
     python run.py classical          # Train classical only
     python run.py hybrid             # Train hybrid only
     python run.py eval <checkpoint>  # Evaluate a model
-    python run.py bypass             # [DEPRECATED] Module removed, use qfirst instead
     python run.py qfirst             # Quantum-first training
     python run.py everything         # Run all experiments
 """
@@ -24,7 +23,7 @@ if str(_parent) not in sys.path:
     sys.path.insert(0, str(_parent))
 
 
-def train(network_type: str, episodes: int, output: str = None, seed: int = None, dropout: float = 0.0, frozen_encoder: bool = False, checkpoint_count: int = 180, encoder_lr_scale: float = 1.0, microwaved_encoder: bool = False, microwaved_fraction: float = 0.5):
+def train(network_type: str, episodes: int, output: str = None, seed: int = None, dropout: float = 0.0, frozen_encoder: bool = False, checkpoint_count: int = 180, encoder_lr_scale: float = 1.0, microwaved_encoder: bool = False, microwaved_fraction: float = 0.5, encoder_layers: list = None, postprocessing_layers: list = None):
     """Train a model."""
     import gymnasium as gym
     import torch
@@ -36,7 +35,7 @@ def train(network_type: str, episodes: int, output: str = None, seed: int = None
         BlackjackClassicalValueNetwork
     )
     from blackjack_experiment.networks.hybrid import UniversalBlackjackHybridPolicyNetwork
-    from blackjack_experiment.core.config import Config, NetworkConfig, AgentConfig, TrainingConfig
+    from blackjack_experiment.config import Config, HybridConfig, AgentConfig, TrainingConfig
     from blackjack_experiment.core.agent import A2CAgent
     from blackjack_experiment.core.trainer import Trainer
     from blackjack_experiment.core.session import SessionManager
@@ -53,7 +52,11 @@ def train(network_type: str, episodes: int, output: str = None, seed: int = None
     
     # Create networks
     if network_type == 'hybrid':
-        policy_net = UniversalBlackjackHybridPolicyNetwork()
+        hybrid_cfg = HybridConfig(
+            encoder_layers=encoder_layers,
+            postprocessing_layers=postprocessing_layers
+        )
+        policy_net = UniversalBlackjackHybridPolicyNetwork(config=hybrid_cfg)
         print(f"Qubits: {policy_net.n_qubits} | Layers: {policy_net.n_layers}")
         print(f"Encoder: {policy_net.encoder_compression} | Single-axis: {policy_net.single_axis_encoding}")
         if dropout > 0:
@@ -74,14 +77,17 @@ def train(network_type: str, episodes: int, output: str = None, seed: int = None
     # Config
     config = Config(
         seed=seed,
-        network=NetworkConfig(network_type=network_type),
-        agent=AgentConfig(lr_policy=1e-3, lr_value=1e-3, gamma=0.99, entropy_coef=0.01, encoder_lr_scale=encoder_lr_scale),
+        network_type=network_type,
+        agent=AgentConfig(learning_rate=1e-3, gamma=0.99, entropy_coef=0.01, encoder_lr_scale=encoder_lr_scale),
         training=TrainingConfig(n_episodes=episodes, 
                                checkpoint_count=checkpoint_count,
                                eval_every=max(50, episodes//20),
                                microwaved_encoder=microwaved_encoder,
                                microwaved_fraction=microwaved_fraction)
     )
+    
+    if network_type == 'hybrid':
+        config.hybrid = hybrid_cfg
     
     # Setup
     env = gym.make('Blackjack-v1')
@@ -103,7 +109,7 @@ def train(network_type: str, episodes: int, output: str = None, seed: int = None
     session = SessionManager(base_dir=output, session_name="")
     
     # Train
-    trainer = Trainer(agent, env, config.training, session)
+    trainer = Trainer(agent, env, config, session)
     rewards, _, _ = trainer.train()
     
     # Summary
@@ -113,7 +119,7 @@ def train(network_type: str, episodes: int, output: str = None, seed: int = None
     return {'win_rate': wr, 'episodes': len(rewards), 'seed': seed, 'output': output}
 
 
-def compare(episodes: int, output: str = None, seed: int = None, dropout: float = 0.0, frozen_encoder: bool = False, checkpoint_count: int = 180, encoder_lr_scale: float = 1.0, microwaved_encoder: bool = False, microwaved_fraction: float = 0.5):
+def compare(episodes: int, output: str = None, seed: int = None, dropout: float = 0.0, frozen_encoder: bool = False, checkpoint_count: int = 180, encoder_lr_scale: float = 1.0, microwaved_encoder: bool = False, microwaved_fraction: float = 0.5, encoder_layers: list = None, postprocessing_layers: list = None):
     """Compare classical vs hybrid."""
     from blackjack_experiment.core.session import ComparisonSessionManager
     from blackjack_experiment.analysis.comparison import ComparisonAnalyzer
@@ -147,7 +153,7 @@ def compare(episodes: int, output: str = None, seed: int = None, dropout: float 
     
     print("\n[2/2] Hybrid...")
     hybrid_out = str(session.create_session('hybrid').session_dir)
-    results['hybrid'] = train('hybrid', episodes, hybrid_out, seed + 1, dropout, frozen_encoder, checkpoint_count, encoder_lr_scale, microwaved_encoder, microwaved_fraction)
+    results['hybrid'] = train('hybrid', episodes, hybrid_out, seed + 1, dropout, frozen_encoder, checkpoint_count, encoder_lr_scale, microwaved_encoder, microwaved_fraction, encoder_layers, postprocessing_layers)
     
     # Run comparison analysis
     print(f"\n{'='*60}")
@@ -294,13 +300,6 @@ def evaluate(checkpoint: str, episodes: int = 500):
     print(f"Basic Strategy Accuracy: {cm['accuracy']:.1f}%")
     
     return {'win_rate': wr, 'accuracy': cm['accuracy']}
-
-
-def bypass(episodes: int = 1000, output: str = None, seed: int = None):
-    """Run bypass experiment. [DEPRECATED - Module removed]"""
-    print("[ERROR] The bypass experiment module has been removed.")
-    print("Please use 'qfirst' for quantum-first training experiments.")
-    return None
 
 
 def qfirst(episodes: int = 5000, qf_episodes: int = 1000, dropout: float = 0.0, 
@@ -546,7 +545,7 @@ def _run_quantum_contribution_analysis(agent, session):
 
 
 def everything(episodes: int = 5000, output: str = None, seed: int = None):
-    """Run ALL experiments: comparison + bypass + qfirst."""
+    """Run ALL experiments: comparison + qfirst."""
     import random
     
     seed = seed or random.randint(0, 2**31 - 1)
@@ -563,20 +562,13 @@ def everything(episodes: int = 5000, output: str = None, seed: int = None):
     
     # 1. Comparison
     print(f"\n{'='*70}")
-    print("[1/3] COMPARISON EXPERIMENT")
+    print("[1/2] COMPARISON EXPERIMENT")
     print(f"{'='*70}")
     results['comparison'] = compare(episodes, f"{base_output}/comparison", seed)
     
-    # 2. Bypass
+    # 2. Quantum-first
     print(f"\n{'='*70}")
-    print("[2/3] BYPASS EXPERIMENT")
-    print(f"{'='*70}")
-    bypass_ep = min(1000, episodes // 5)  # Scale bypass episodes
-    results['bypass'] = bypass(bypass_ep, f"{base_output}/bypass", seed + 100)
-    
-    # 3. Quantum-first
-    print(f"\n{'='*70}")
-    print("[3/3] QUANTUM-FIRST EXPERIMENT")
+    print("[2/2] QUANTUM-FIRST EXPERIMENT")
     print(f"{'='*70}")
     results['qfirst'] = qfirst(episodes, episodes // 5, 0.2, f"{base_output}/qfirst", seed + 200)
     
@@ -587,7 +579,6 @@ def everything(episodes: int = 5000, output: str = None, seed: int = None):
     print(f"\nComparison:")
     print(f"  Classical: {results['comparison']['classical']['win_rate']:.1f}% WR")
     print(f"  Hybrid:    {results['comparison']['hybrid']['win_rate']:.1f}% WR")
-    print(f"\nBypass verdict: {results['bypass'].get('verdict', 'N/A')}")
     print(f"\nQuantum-first: {results['qfirst']['win_rate']:.1f}% WR")
     print(f"\nAll results saved to: {base_output}")
     
@@ -602,7 +593,6 @@ def everything(episodes: int = 5000, output: str = None, seed: int = None):
                     'classical_wr': results['comparison']['classical']['win_rate'],
                     'hybrid_wr': results['comparison']['hybrid']['win_rate']
                 },
-                'bypass_verdict': results['bypass'].get('verdict'),
                 'qfirst_wr': results['qfirst']['win_rate']
             }
         }, f, indent=2)
@@ -620,7 +610,6 @@ Commands:
     classical     Train classical network
     hybrid        Train hybrid quantum network  
     eval FILE     Evaluate a checkpoint
-    bypass        Bypass experiment (test quantum contribution)
     qfirst        Quantum-first training
     everything    Run ALL experiments
 
@@ -632,14 +621,13 @@ Examples:
     python run.py compare -d 0.3           # Compare with dropout
     python run.py compare --frozen-encoder # Compare with frozen encoder (hybrid)
     python run.py eval results/final.pth   # Evaluate model
-    python run.py bypass -e 1000           # Bypass experiment
     python run.py qfirst -e 5000 -d 0.3    # Quantum-first + dropout
     python run.py everything -e 3000       # Run everything
 """
     )
     
     parser.add_argument('command', nargs='?', default='compare',
-                       choices=['compare', 'classical', 'hybrid', 'eval', 'bypass', 'qfirst', 'everything'],
+                       choices=['compare', 'classical', 'hybrid', 'eval', 'qfirst', 'everything'],
                        help='Command to run')
     parser.add_argument('checkpoint', nargs='?',
                        help='Checkpoint path (for eval)')
@@ -693,8 +681,6 @@ Examples:
         train('classical', args.episodes, args.output, args.seed, checkpoint_count=args.checkpoint_count)
     elif args.command == 'hybrid':
         train('hybrid', args.episodes, args.output, args.seed, args.dropout, args.frozen_encoder, args.checkpoint_count, args.encoder_lr_scale, microwaved_encoder, microwaved_fraction)
-    elif args.command == 'bypass':
-        bypass(args.episodes, args.output, args.seed)
     elif args.command == 'qfirst':
         qfirst(args.episodes, args.qf_episodes, args.dropout, args.output, args.seed)
     elif args.command == 'everything':

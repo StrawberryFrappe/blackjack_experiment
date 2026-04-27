@@ -43,25 +43,25 @@ class A2CAgent:
         encoding_diversity_coef: float = 0.001,
         seed: Optional[int] = None,
         encoder_lr_scale: float = 1.0
-    ):
+    ) -> None:
         """
-        Initialize A2C agent.
-        
+        Initialize the Advantage Actor-Critic (A2C) agent.
+
         Args:
-            policy_net: Policy network (actor)
-            value_net: Value network (critic)
-            learning_rate: Learning rate for optimizer
-            gamma: Discount factor
-            entropy_coef: Coefficient for entropy bonus
-            value_coef: Coefficient for value loss
-            max_grad_norm: Maximum gradient norm for clipping
-            n_steps: Number of steps for N-step TD
-            use_gae: Whether to use Generalized Advantage Estimation
-            gae_lambda: Lambda parameter for GAE
-            use_encoding_diversity: Whether to use encoding diversity regularization
-            encoding_diversity_coef: Coefficient for encoding diversity loss
-            seed: Random seed
-            encoder_lr_scale: Scaling factor for feature encoder learning rate (hybrid only)
+            policy_net (nn.Module): The policy network (actor) for action selection.
+            value_net (nn.Module): The value network (critic) for state value estimation.
+            learning_rate (float): Initial learning rate for both optimizers. Defaults to 0.001.
+            gamma (float): Discount factor for future rewards. Defaults to 0.99.
+            entropy_coef (float): Coefficient for the entropy bonus to encourage exploration. Defaults to 0.01.
+            value_coef (float): Weight of the value loss in the total loss function. Defaults to 0.5.
+            max_grad_norm (float): Maximum norm for gradient clipping. Defaults to 0.5.
+            n_steps (int): Number of steps for N-step TD returns. Defaults to 5.
+            use_gae (bool): If True, uses Generalized Advantage Estimation. Defaults to False.
+            gae_lambda (float): Lambda parameter for GAE. Defaults to 0.95.
+            use_encoding_diversity (bool): Enable diversity regularization for hybrid encodings. Defaults to False.
+            encoding_diversity_coef (float): Coefficient for encoding diversity loss. Defaults to 0.001.
+            seed (Optional[int]): Random seed for reproducibility. Defaults to None.
+            encoder_lr_scale (float): Scaling factor for the classical encoder's learning rate. Defaults to 1.0.
         """
         self.policy_net = policy_net
         self.value_net = value_net

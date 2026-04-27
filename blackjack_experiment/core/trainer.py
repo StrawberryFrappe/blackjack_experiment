@@ -17,7 +17,7 @@ from collections import deque
 from pathlib import Path
 
 from .agent import A2CAgent
-from .config import Config, TrainingConfig
+from ..config import Config, TrainingConfig
 from .session import SessionManager
 
 
@@ -41,8 +41,8 @@ def create_networks(network_type: str, config: Optional[Config] = None) -> Tuple
             BlackjackClassicalPolicyNetwork,
             BlackjackClassicalValueNetwork
         )
-        hidden_sizes = config.network.hidden_sizes if config else [4, 6, 8, 4]
-        activation = config.network.activation if config else 'tanh'
+        hidden_sizes = config.classical.hidden_sizes if config else [64, 64]
+        activation = config.classical.activation if config else 'tanh'
         
         policy_net = BlackjackClassicalPolicyNetwork(
             hidden_sizes=hidden_sizes,
@@ -66,8 +66,7 @@ def create_networks(network_type: str, config: Optional[Config] = None) -> Tuple
             UniversalBlackjackHybridPolicyNetwork,
             UniversalBlackjackHybridValueNetwork
         )
-        # Use class defaults - network design is owned by hybrid/config.py
-        policy_net = UniversalBlackjackHybridPolicyNetwork()
+        policy_net = UniversalBlackjackHybridPolicyNetwork(config=config.hybrid if config else None)
         value_net = UniversalBlackjackHybridValueNetwork()
         
     else:
@@ -107,10 +106,10 @@ def create_agent(
         n_steps=config.agent.n_steps,
         use_gae=config.agent.use_gae,
         gae_lambda=config.agent.gae_lambda,
-        use_encoding_diversity=config.network.use_encoding_diversity,
-        encoding_diversity_coef=config.network.encoding_diversity_coef,
+        use_encoding_diversity=config.agent.use_encoding_diversity,
+        encoding_diversity_coef=config.agent.encoding_diversity_coef,
         seed=seed,
-        encoder_lr=config.agent.encoder_lr
+        encoder_lr_scale=config.agent.encoder_lr_scale
     )
 
 
@@ -206,31 +205,32 @@ class Trainer:
         self,
         agent: A2CAgent,
         env: gym.Env,
-        config: TrainingConfig,
+        config: Config,
         session_manager: Optional[SessionManager] = None,
         enable_analysis: bool = True,
         verbose: bool = True
-    ):
+    ) -> None:
         """
-        Initialize trainer.
-        
+        Initialize the Trainer for A2C experiments.
+
         Args:
-            agent: A2C agent
-            env: Gym environment
-            config: Training configuration
-            session_manager: Session manager for output organization
-            enable_analysis: Enable post-training analysis
-            verbose: Print detailed progress
+            agent (A2CAgent): The reinforcement learning agent to train.
+            env (gym.Env): The Gymnasium environment (typically 'Blackjack-v1').
+            config (TrainingConfig): Configuration object containing training hyperparameters.
+            session_manager (Optional[SessionManager]): Manager for organizing session outputs and models.
+            enable_analysis (bool): If True, runs behavioral analysis after training. Defaults to True.
+            verbose (bool): If True, prints detailed progress to the console. Defaults to True.
         """
         self.agent = agent
         self.env = env
         self.config = config
+        self.training_config = config.training
         self.session_manager = session_manager
         self.enable_analysis = enable_analysis and session_manager is not None
         self.verbose = verbose
         
-        # config is a TrainingConfig object
-        self.analysis_frequency = config.save_frequency
+        # Use training config for frequency
+        self.analysis_frequency = config.training.checkpoint_count
         
         # Detect Blackjack environment
         env_name = getattr(env, 'spec', None)
@@ -290,15 +290,15 @@ class Trainer:
             print("=" * 60)
             print("Starting Training" if start_episode == 0 else f"Resuming from Episode {start_episode + 1}")
             print("=" * 60)
-            print(f"Episodes: {start_episode + 1} to {self.config.n_episodes}")
-            print(f"Max steps per episode: {self.config.max_steps_per_episode}")
+            print(f"Episodes: {start_episode + 1} to {self.training_config.n_episodes}")
+            print(f"Max steps per episode: {self.training_config.max_steps_per_episode}")
             print(f"Gamma: {self.agent.gamma}")
             print("=" * 60)
         
         # Microwaved encoder logic
         microwaved_unfreeze_episode = 0
-        if getattr(self.config, 'microwaved_encoder', False) and hasattr(self.agent.policy_net, 'freeze_component'):
-            microwaved_unfreeze_episode = int(self.config.n_episodes * getattr(self.config, 'microwaved_fraction', 0.5))
+        if getattr(self.training_config, 'microwaved_encoder', False) and hasattr(self.agent.policy_net, 'freeze_component'):
+            microwaved_unfreeze_episode = int(self.training_config.n_episodes * getattr(self.training_config, 'microwaved_fraction', 0.5))
             if start_episode < microwaved_unfreeze_episode:
                 if self.verbose:
                     print(f"MICROWAVED ENCODER: Freezing encoder until episode {microwaved_unfreeze_episode}")
@@ -310,9 +310,9 @@ class Trainer:
 
         recent_rewards = deque(maxlen=100)
         
-        for episode in range(start_episode, self.config.n_episodes):
+        for episode in range(start_episode, self.training_config.n_episodes):
             # Check for unfreeze
-            if getattr(self.config, 'microwaved_encoder', False) and episode == microwaved_unfreeze_episode:
+            if getattr(self.training_config, 'microwaved_encoder', False) and episode == microwaved_unfreeze_episode:
                 if hasattr(self.agent.policy_net, 'unfreeze_component'):
                     if self.verbose:
                         print(f"MICROWAVED ENCODER: Unfreezing encoder at episode {episode}")
@@ -323,7 +323,7 @@ class Trainer:
             episode_reward = 0
             step_metrics_list = []
             
-            for step in range(self.config.max_steps_per_episode):
+            for step in range(self.training_config.max_steps_per_episode):
                 action = self.agent.select_action(state, training=True)
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
                 done = terminated or truncated
@@ -367,15 +367,15 @@ class Trainer:
                 self.training_metrics.append(metrics)
             
             # Print progress
-            if (episode + 1) % self.config.print_every == 0:
+            if (episode + 1) % self.training_config.print_every == 0:
                 self._print_progress(episode + 1, recent_rewards)
             
             # Save checkpoint
-            if self.config.save_model and (episode + 1) % self.config.save_frequency == 0:
+            if self.training_config.save_model and (episode + 1) % self.training_config.save_frequency == 0:
                 self._save_checkpoint(episode + 1, recent_rewards)
         
         # Final save
-        if self.config.save_model:
+        if self.training_config.save_model:
             self._save_final_model()
         
         if self.verbose:
@@ -399,10 +399,10 @@ class Trainer:
         
         if self.is_blackjack:
             win_rate = sum(1 for r in recent_rewards if r > 0) / len(recent_rewards) * 100
-            print(f"Episode {episode}/{self.config.n_episodes} | "
+            print(f"Episode {episode}/{self.training_config.n_episodes} | "
                   f"Avg Reward: {avg_reward:.2f} | Win Rate: {win_rate:.1f}%")
         else:
-            print(f"Episode {episode}/{self.config.n_episodes} | Avg Reward: {avg_reward:.2f}")
+            print(f"Episode {episode}/{self.training_config.n_episodes} | Avg Reward: {avg_reward:.2f}")
     
     def _save_checkpoint(self, episode: int, recent_rewards: deque):
         """Save training checkpoint."""
@@ -574,82 +574,27 @@ class Trainer:
     
     def _save_session_config(self):
         """Save complete session configuration for reproducibility."""
-        import torch
         import sys
         import numpy as np
         from datetime import datetime
+        import dataclasses
         
-        # Extract network configuration from policy network
-        policy_net = self.agent.policy_net
-        network_config = {}
-        
-        if hasattr(policy_net, 'quantum_circuit'):
-            # Hybrid network
-            network_config = {
-                'type': 'hybrid',
-                'n_qubits': getattr(policy_net, 'n_qubits', None),
-                'n_layers': getattr(policy_net, 'n_layers', None),
-                'encoding': getattr(policy_net, 'encoding', None),
-                'entanglement_strategy': getattr(policy_net, 'entanglement_strategy', None),
-                'measurement_mode': getattr(policy_net, 'measurement_mode', None),
-                'data_reuploading': getattr(policy_net, 'data_reuploading', None),
-                'device_name': getattr(policy_net, 'device_name', 'default.qubit'),
-                'single_axis_encoding': getattr(policy_net, 'single_axis_encoding', True),
-                'encoder_compression': getattr(policy_net, 'encoder_compression', 'minimal'),
-                'encoding_transform': getattr(policy_net, 'encoding_transform', 'arctan'),
-                'reuploading_transform': getattr(policy_net, 'reuploading_transform', 'arctan'),
-                'encoding_scale': getattr(policy_net, 'encoding_scale', 2.0),
-                'learnable_input_scaling': getattr(policy_net, 'learnable_input_scaling', False),
-                'quantum_dropout_rate': getattr(policy_net, '_quantum_dropout_rate', 0.0),
-                'frozen_components': list(getattr(policy_net, '_frozen_components', set())),
-                'microwaved_encoder': getattr(self.config, 'microwaved_encoder', False),
-                'microwaved_fraction': getattr(self.config, 'microwaved_fraction', 0.5),
-            }
-        else:
-            # Classical network
-            network_config = {
-                'type': 'classical',
-                'hidden_sizes': getattr(policy_net, 'hidden_sizes', None),
-                'activation': getattr(policy_net, 'activation_name', None),
-            }
-        
-        # Build complete session info
+        def to_dict(obj):
+            if dataclasses.is_dataclass(obj):
+                return dataclasses.asdict(obj)
+            return str(obj)
+
         session_info = {
             'session_name': self.session_manager.session_name,
             'created_at': datetime.now().isoformat(),
-            'seed': self.agent.seed,
-            'network': network_config,
-            'agent': {
-                'learning_rate': self.agent.training_config['learning_rate'],
-                'encoder_lr_scale': getattr(self.agent, 'encoder_lr_scale', 1.0) if hasattr(self.agent, 'encoder_lr_scale') else self.agent.training_config.get('encoder_lr_scale', 1.0),
-                'gamma': self.agent.training_config['gamma'],
-                'entropy_coef': self.agent.training_config['entropy_coef'],
-                'value_coef': self.agent.training_config['value_coef'],
-                'max_grad_norm': self.agent.training_config['max_grad_norm'],
-                'n_steps': self.agent.training_config['n_steps'],
-                'use_gae': self.agent.training_config['use_gae'],
-                'gae_lambda': self.agent.training_config['gae_lambda'],
-            },
-            'training': {
-                'n_episodes': self.config.n_episodes,
-                'max_steps_per_episode': self.config.max_steps_per_episode,
-                'microwaved_encoder': getattr(self.config, 'microwaved_encoder', False),
-                'microwaved_fraction': getattr(self.config, 'microwaved_fraction', 0.5),
-                'print_every': self.config.print_every,
-                'eval_every': self.config.eval_every,
-                'eval_episodes': self.config.eval_episodes,
-                'save_frequency': self.config.save_frequency,
-                'enable_analysis': self.config.enable_analysis,
-                'monitor_gradients': self.config.monitor_gradients,
-            },
+            'config': dataclasses.asdict(self.config),
             'environment': {
                 'python_version': sys.version,
-                'torch_version': torch.__version__,
+                'torch_version': torch.__version__ if 'torch' in sys.modules else 'unknown',
                 'numpy_version': np.__version__,
             }
         }
         
-        # Save session_info.json
         self.session_manager.metadata = session_info
         self.session_manager.save_metadata()
         
